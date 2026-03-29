@@ -1,0 +1,213 @@
+{
+  "_comment": "Full op/event sequence for Scenario 2: Review Loop. Reviewer rejects twice, coder fixes, reviewer approves on third round.",
+  "task_id": "01JQXYZ1234567890ABCDEF",
+  "workspace_id": "01JQWS0000000000000001",
+  "pipeline_id": "01JQPIPE000000000000001",
+  "preconditions": {
+    "current_stage": "reviewer",
+    "review_iterations": 0,
+    "description": "Pipeline has advanced through Created -> IntentClarifier -> InitAgent -> Planner -> Coder -> Reviewer. Coder has produced implementation files."
+  },
+  "sequence": [
+    {
+      "step": 1,
+      "description": "Reviewer rejects: missing error handling",
+      "op": null,
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "verdict": "request_changes",
+            "iteration": 1
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "from": "reviewer",
+            "to": "coder",
+            "timestamp": "2026-03-29T10:01:50.000Z"
+          }
+        }
+      ],
+      "state_after": {
+        "current_stage": "coder",
+        "review_iterations": 1
+      }
+    },
+    {
+      "step": 2,
+      "description": "Coder fixes error handling",
+      "op": null,
+      "expected_events": [
+        {
+          "type": "AgentOutput",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "stage": "coder",
+            "delta": "Adding error handling to all endpoints...",
+            "is_final": false
+          }
+        },
+        {
+          "type": "ToolExecution",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "tool": "write_file",
+            "params": { "path": "src/routes/todos.rs", "content": "(updated with error handling)" },
+            "result": { "success": true, "bytes_written": 4200 },
+            "duration_ms": 18
+          }
+        },
+        {
+          "type": "AgentOutput",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "stage": "coder",
+            "delta": "Error handling added.",
+            "is_final": true
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-03-29T10:02:20.000Z"
+          }
+        }
+      ],
+      "state_after": {
+        "current_stage": "reviewer",
+        "review_iterations": 1
+      }
+    },
+    {
+      "step": 3,
+      "description": "Reviewer rejects again: tests not updated",
+      "op": null,
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "verdict": "request_changes",
+            "iteration": 2
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "from": "reviewer",
+            "to": "coder",
+            "timestamp": "2026-03-29T10:02:45.000Z"
+          }
+        }
+      ],
+      "state_after": {
+        "current_stage": "coder",
+        "review_iterations": 2
+      }
+    },
+    {
+      "step": 4,
+      "description": "Coder adds tests",
+      "op": null,
+      "expected_events": [
+        {
+          "type": "AgentOutput",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "stage": "coder",
+            "delta": "Writing unit tests for all endpoints...",
+            "is_final": false
+          }
+        },
+        {
+          "type": "ToolExecution",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "tool": "write_file",
+            "params": { "path": "tests/api_tests.rs", "content": "(test code)" },
+            "result": { "success": true, "bytes_written": 2800 },
+            "duration_ms": 14
+          }
+        },
+        {
+          "type": "AgentOutput",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "stage": "coder",
+            "delta": "Tests added.",
+            "is_final": true
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-03-29T10:03:15.000Z"
+          }
+        }
+      ],
+      "state_after": {
+        "current_stage": "reviewer",
+        "review_iterations": 2
+      }
+    },
+    {
+      "step": 5,
+      "description": "Reviewer approves on third round",
+      "op": null,
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "verdict": "approved",
+            "iteration": 2
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "from": "reviewer",
+            "to": "human_review",
+            "timestamp": "2026-03-29T10:03:40.000Z"
+          }
+        },
+        {
+          "type": "ApprovalRequired",
+          "payload": {
+            "pipeline_id": "01JQPIPE000000000000001",
+            "task_id": "01JQXYZ1234567890ABCDEF",
+            "summary": "Implementation complete after 2 review iterations. Error handling added, tests written. Reviewer approved."
+          }
+        }
+      ],
+      "state_after": {
+        "current_stage": "human_review",
+        "review_iterations": 2
+      }
+    }
+  ],
+  "assertions": {
+    "final_stage": "human_review",
+    "review_iterations": 2,
+    "total_loop_transitions": 4,
+    "loop_transitions": [
+      { "from": "reviewer", "to": "coder", "reason": "Missing error handling in POST /todos endpoint" },
+      { "from": "coder", "to": "reviewer" },
+      { "from": "reviewer", "to": "coder", "reason": "Tests not updated for new error handling paths" },
+      { "from": "coder", "to": "reviewer" }
+    ],
+    "all_rejection_reasons_recorded": true
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "_comment": "Sample workspace data for frontend tests. Matches frontend/src/types/index.ts Workspace interface.",
+  "workspaces": [
+    {
+      "id": "01JQWS0000000000000001",
+      "name": "todo-api-project",
+      "repos": ["https://github.com/user/todo-api.git"],
+      "swimlane": {
+        "active": "feat/todo-api",
+        "base": "main"
+      },
+      "worktrees": [
+        {
+          "id": "01JQWT0000000000000001",
+          "branch": "feat/todo-api",
+          "status": "active",
+          "files": [
+            { "name": "Cargo.toml", "type": "toml", "size": "512B", "author": "init_agent" },
+            { "name": "src/main.rs", "type": "rs", "size": "1.2KB", "author": "coder" },
+            { "name": "src/routes/todos.rs", "type": "rs", "size": "3.4KB", "author": "coder" },
+            { "name": "src/models/todo.rs", "type": "rs", "size": "890B", "author": "coder" }
+          ]
+        },
+        {
+          "id": "01JQWT0000000000000002",
+          "branch": "main",
+          "status": "idle",
+          "files": [
+            { "name": "README.md", "type": "md", "size": "256B", "author": "init_agent" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "01JQWS0000000000000002",
+      "name": "dashboard-frontend",
+      "repos": ["https://github.com/user/dashboard.git"],
+      "swimlane": {
+        "active": "feat/new-charts",
+        "base": "develop"
+      },
+      "worktrees": [
+        {
+          "id": "01JQWT0000000000000003",
+          "branch": "feat/new-charts",
+          "status": "processing",
+          "files": [
+            { "name": "package.json", "type": "json", "size": "1.8KB", "author": "init_agent" },
+            { "name": "src/App.tsx", "type": "tsx", "size": "2.1KB", "author": "coder" },
+            { "name": "src/components/Chart.tsx", "type": "tsx", "size": "4.5KB", "author": "coder" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "01JQWS0000000000000003",
+      "name": "empty-workspace",
+      "repos": [],
+      "swimlane": {
+        "active": "",
+        "base": ""
+      },
+      "worktrees": []
+    }
+  ]
+}

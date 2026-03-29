@@ -1,0 +1,22 @@
+[package]
+name = "beaver-builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ulid = { version = "1", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+futures = "0.3"
+thiserror = "1"
+
+[dev-dependencies]
+tokio-tungstenite = "0.24"

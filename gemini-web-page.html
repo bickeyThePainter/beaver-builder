@@ -1,0 +1,512 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Activity, 
+  User, 
+  Bot, 
+  AlertCircle, 
+  CheckCircle2, 
+  Clock, 
+  Plus,
+  ChevronRight,
+  Cpu,
+  Terminal,
+  ShieldCheck,
+  FolderOpen,
+  Github,
+  FileCode,
+  LayoutDashboard,
+  MessageSquare,
+  Search,
+  Send,
+  Wand2,
+  Code2,
+  GitPullRequest,
+  Rocket,
+  CheckCircle,
+  FileJson,
+  Layers,
+  FileText,
+  ChevronDown,
+  HardDrive,
+  GitBranch,
+  Box
+} from 'lucide-react';
+
+// --- CONSTANTS ---
+const CODING_PIPELINE = [
+  { id: 'designer', label: 'Designer', icon: <Wand2 size={12}/> },
+  { id: 'coder', label: 'Coder', icon: <Code2 size={12}/> },
+  { id: 'reviewer', label: 'Reviewer', icon: <Search size={12}/> },
+  { id: 'human', label: 'Human Approve', icon: <User size={12}/> },
+  { id: 'commiter', label: 'Commiter', icon: <GitPullRequest size={12}/> },
+  { id: 'deployer', label: 'Deployer', icon: <Rocket size={12}/> }
+];
+
+const INITIAL_WORKSPACES = [
+  { 
+    id: "ws-1", 
+    name: "Infrastructure Monitoring", 
+    repos: ["github.com/lisette/ebpf-sniffer", "github.com/lisette/kernel-bridge"],
+    swimlane: { active: "staging-ebpf-alpha-04", base: "ubuntu-22.04-LTS-kernel-6.1" },
+    worktrees: [
+      {
+        id: "wt-101",
+        branch: "feat/metaspace-sampling",
+        status: "Active",
+        files: [
+          { name: "analysis_report.md", type: "text", size: "12kb", author: "Designer" },
+          { name: "ebpf_probe_v2.rs", type: "code", size: "45kb", author: "Coder" },
+          { name: "trace_dump.json", type: "data", size: "1.2mb", author: "Sniffer" }
+        ]
+      },
+      {
+        id: "wt-102",
+        branch: "fix/btf-loading-issue",
+        status: "Idle",
+        files: [
+          { name: "btf_fix.patch", type: "code", size: "4kb", author: "Reviewer" },
+          { name: "debug_logs.txt", type: "text", size: "120kb", author: "System" }
+        ]
+      }
+    ]
+  },
+  { 
+    id: "ws-2", 
+    name: "FinTech Strategy", 
+    repos: ["github.com/lisette/quant-engine"],
+    swimlane: { active: "quant-sandbox-v2", base: "debian-11-python-3.11" },
+    worktrees: [
+      {
+        id: "wt-201",
+        branch: "strategy/usd-sgd-volatility",
+        status: "Processing",
+        files: [
+          { name: "strategy_backtest.pdf", type: "pdf", size: "450kb", author: "Researcher" },
+          { name: "params.yaml", type: "config", size: "2kb", author: "Coder" }
+        ]
+      }
+    ]
+  }
+];
+
+const INITIAL_TASKS = [
+  {
+    id: "TSK-101",
+    title: "Rust Memory Profiler",
+    spec: "Design a zero-overhead memory profiler for Rust services using eBPF.",
+    workspaceId: "ws-1",
+    currentStage: "coder",
+    status: "Processing",
+    logs: ["[system] Designer finished spec.", "[agent] Coder starting implementation..."],
+    priority: "High"
+  }
+];
+
+const App = () => {
+  const [currentView, setCurrentView] = useState('dashboard'); 
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [workspaces, setWorkspaces] = useState(INITIAL_WORKSPACES);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedWorkspace, setSelectedWorkspace] = useState(INITIAL_WORKSPACES[0]);
+  const [activeWorktreeId, setActiveWorktreeId] = useState(INITIAL_WORKSPACES[0]?.worktrees[0]?.id || null);
+  
+  // Chat State
+  const [messages, setMessages] = useState([
+    { role: 'agent', content: "Hello Lisette. I'm your Intent Clarifier. Describe the coding pipeline we need to initialize." }
+  ]);
+  const [input, setInput] = useState("");
+  const [generatedSpec, setGeneratedSpec] = useState(null);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
+
+  // Handle workspace change - reset active worktree
+  const handleWorkspaceSelect = (ws) => {
+    setSelectedWorkspace(ws);
+    if (ws.worktrees && ws.worktrees.length > 0) {
+      setActiveWorktreeId(ws.worktrees[0].id);
+    }
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const userMsg = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+
+    setTimeout(() => {
+      if (messages.length === 1) {
+        setMessages(prev => [...prev, { role: 'agent', content: "I see. Should we utilize an existing workspace, or should I provision a fresh playground for these agents?" }]);
+      } else if (!generatedSpec) {
+        setGeneratedSpec({
+          title: "EBPF Metaspace Monitor",
+          description: "Detecting script-induced metaspace leaks via kernel-level sampling.",
+          workspace: "New: ebpf-monitor-context",
+          techStack: ["Rust", "eBPF", "Clang"]
+        });
+        setMessages(prev => [...prev, { role: 'agent', content: "Specification generated. Review the deployment card below to spin up the pipeline." }]);
+      }
+    }, 800);
+  };
+
+  const deployTask = () => {
+    const newWsId = `ws-${Date.now()}`;
+    const newWtId = `wt-${Date.now()}`;
+    if (generatedSpec.workspace.startsWith("New:")) {
+      const newWs = {
+        id: newWsId,
+        name: generatedSpec.title,
+        repos: [],
+        swimlane: { active: "temp-auto-swimlane", base: "generic-agent-v1" },
+        worktrees: [{ id: newWtId, branch: "main", status: "Active", files: [] }]
+      };
+      setWorkspaces([...workspaces, newWs]);
+    }
+    const newTask = {
+      id: `TSK-${Math.floor(Math.random() * 900) + 100}`,
+      title: generatedSpec.title,
+      spec: generatedSpec.description,
+      workspaceId: generatedSpec.workspace.startsWith("New:") ? newWsId : "ws-1",
+      currentStage: "designer",
+      status: "Initializing",
+      logs: ["[system] Workspace provisioned.", "[agent] Designer analyzing intent..."],
+      priority: "Medium"
+    };
+    setTasks([newTask, ...tasks]);
+    setCurrentView('dashboard');
+    setGeneratedSpec(null);
+    setMessages([{ role: 'agent', content: "Hello Lisette. New session started." }]);
+  };
+
+  const renderDashboard = () => (
+    <div className="grid grid-cols-12 gap-6 animate-in fade-in duration-500">
+      <div className="col-span-8 space-y-4">
+        <h2 className="text-lg font-semibold text-slate-400 mb-2 px-1">Pipeline Oversight</h2>
+        {tasks.map((task) => (
+          <div key={task.id} onClick={() => setSelectedTask(task)} className={`group bg-slate-900/40 border ${selectedTask?.id === task.id ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-800'} rounded-xl p-5 cursor-pointer transition-all`}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <Terminal size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-slate-600">#{task.id}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 font-medium uppercase tracking-tighter">
+                      {workspaces.find(w => w.id === task.workspaceId)?.name}
+                    </span>
+                  </div>
+                  <h3 className="text-md font-bold text-white tracking-tight">{task.title}</h3>
+                </div>
+              </div>
+              <span className="text-[10px] px-2 py-1 rounded border border-indigo-500/30 text-indigo-400 font-bold uppercase">
+                {task.status}
+              </span>
+            </div>
+            <div className="grid grid-cols-6 gap-1 relative pt-2">
+              {CODING_PIPELINE.map((stage, idx) => {
+                const isPast = CODING_PIPELINE.findIndex(s => s.id === task.currentStage) > idx;
+                const isCurrent = task.currentStage === stage.id;
+                return (
+                  <div key={stage.id} className="relative group/stage">
+                    <div className={`h-1 rounded-full mb-2 ${isPast ? 'bg-indigo-500' : isCurrent ? 'bg-indigo-400 animate-pulse' : 'bg-slate-800'}`} />
+                    <div className={`flex flex-col items-center gap-1 ${isCurrent ? 'text-indigo-300' : isPast ? 'text-slate-400' : 'text-slate-700'}`}>
+                       <span className={`p-1 rounded-md border ${isCurrent ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`}>
+                        {isPast ? <CheckCircle size={10} /> : stage.icon}
+                       </span>
+                       <span className="text-[8px] font-bold uppercase whitespace-nowrap">{stage.label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="col-span-4 space-y-6">
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 min-h-[400px]">
+          {selectedTask ? (
+            <div className="space-y-6 animate-in slide-in-from-right-4">
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase mb-3 flex items-center gap-2 underline decoration-indigo-500/50 underline-offset-4">Active Specification</h4>
+                <div className="text-xs text-slate-300 bg-black/40 p-4 rounded-xl border border-slate-800 leading-relaxed font-mono">
+                  {selectedTask.spec}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase mb-3">Live Telemetry</h4>
+                <div className="space-y-2">
+                  {selectedTask.logs.map((log, i) => (
+                    <div key={i} className="text-[10px] font-mono text-slate-500 flex gap-2">
+                      <span className="text-indigo-600 shrink-0">›</span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                  <div className="text-[10px] font-mono text-indigo-400 flex gap-2 animate-pulse">
+                    <span className="shrink-0">›</span>
+                    <span>[{selectedTask.currentStage}] exploring workspace...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-700 text-center">
+              <ShieldCheck size={48} className="mb-4 opacity-10" />
+              <p className="text-xs">Select a pipeline task to monitor agent activity.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderWorkspaces = () => {
+    const activeWorktree = selectedWorkspace?.worktrees?.find(wt => wt.id === activeWorktreeId) || selectedWorkspace?.worktrees?.[0];
+
+    return (
+      <div className="grid grid-cols-12 gap-6 animate-in fade-in duration-500">
+        {/* Sidebar: Workspace List */}
+        <div className="col-span-3 space-y-3">
+          <h2 className="text-lg font-semibold text-slate-400 mb-4 px-1">Active Workspaces</h2>
+          {workspaces.map(ws => (
+            <div 
+              key={ws.id} 
+              onClick={() => handleWorkspaceSelect(ws)}
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedWorkspace.id === ws.id ? 'bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/20 text-white' : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:border-slate-700'}`}
+            >
+              <div className="flex items-center gap-3">
+                <FolderOpen size={18} className={selectedWorkspace.id === ws.id ? 'text-indigo-100' : 'text-indigo-500'} />
+                <div className="truncate">
+                  <div className="text-sm font-bold">{ws.name}</div>
+                  <div className={`text-[10px] uppercase font-bold ${selectedWorkspace.id === ws.id ? 'text-indigo-200' : 'text-slate-600'}`}>
+                    {tasks.filter(t => t.workspaceId === ws.id).length} Active Tasks
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button className="w-full py-3 rounded-xl border border-dashed border-slate-800 text-slate-600 flex items-center justify-center gap-2 hover:border-slate-600 hover:text-slate-400 transition-all text-xs font-bold uppercase mt-4">
+            <Plus size={16} /> Provision Workspace
+          </button>
+        </div>
+
+        {/* Main Area: Workspace Detail */}
+        <div className="col-span-9 space-y-6">
+          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 min-h-[600px]">
+            <div className="flex justify-between items-start border-b border-slate-800 pb-6 mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold uppercase tracking-widest">Context ID: {selectedWorkspace.id}</span>
+                </div>
+                <h1 className="text-2xl font-black text-white">{selectedWorkspace.name}</h1>
+              </div>
+              <div className="flex gap-3">
+                 <button className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 transition-all"><Github size={20}/></button>
+                 <button className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 transition-all"><Activity size={20}/></button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              {/* Left Configuration Pane */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Github size={14} className="text-indigo-400" /> Linked Repositories
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedWorkspace.repos && selectedWorkspace.repos.length > 0 ? selectedWorkspace.repos.map(repo => (
+                      <div key={repo} className="flex items-center justify-between p-3 bg-black/40 border border-slate-800 rounded-lg group hover:border-indigo-500/50 transition-all">
+                        <span className="text-xs font-mono text-indigo-300">{repo}</span>
+                        <button className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-all underline">Fetch</button>
+                      </div>
+                    )) : (
+                      <div className="text-xs text-slate-600 italic p-4 border border-dashed border-slate-800 rounded-lg text-center">No external repositories linked.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Box size={14} className="text-indigo-400" /> Swimlane Environment
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-slate-800/30 p-3 rounded-lg border border-slate-800 flex justify-between items-center">
+                      <div>
+                        <div className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Active Swimlane</div>
+                        <div className="text-xs text-indigo-300 font-mono">{selectedWorkspace.swimlane.active}</div>
+                      </div>
+                      <div className="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-bold">LIVE</div>
+                    </div>
+                    <div className="bg-slate-800/30 p-3 rounded-lg border border-slate-800">
+                      <div className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Base Image / Snapshot</div>
+                      <div className="text-xs text-slate-400 font-mono">{selectedWorkspace.swimlane.base}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Worktree Section */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <GitBranch size={14} className="text-indigo-400" /> Active Worktrees
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedWorkspace.worktrees && selectedWorkspace.worktrees.map(wt => (
+                      <div 
+                        key={wt.id} 
+                        onClick={() => setActiveWorktreeId(wt.id)}
+                        className={`p-3 rounded-lg border flex justify-between items-center cursor-pointer transition-all ${activeWorktreeId === wt.id ? 'bg-indigo-500/10 border-indigo-500' : 'bg-black/20 border-slate-800 hover:border-slate-700'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Terminal size={14} className={activeWorktreeId === wt.id ? 'text-indigo-400' : 'text-slate-600'} />
+                          <span className={`text-[11px] font-mono ${activeWorktreeId === wt.id ? 'text-indigo-200' : 'text-slate-400'}`}>{wt.branch}</span>
+                        </div>
+                        <span className={`text-[9px] font-bold uppercase ${wt.status === 'Active' ? 'text-emerald-500' : wt.status === 'Processing' ? 'text-amber-500' : 'text-slate-600'}`}>{wt.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Agent Playground: Worktree Assets */}
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Bot size={14} className="text-indigo-400" /> Agent-Generated Assets
+                </h4>
+                <div className="bg-black/60 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                  <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Playground Explorer: {activeWorktree?.branch || 'main'}</span>
+                    <div className="flex gap-1">
+                      <div className={`w-2 h-2 rounded-full ${activeWorktree?.status === 'Processing' ? 'bg-amber-500 animate-pulse' : 'bg-slate-800'}`} />
+                      <div className="w-2 h-2 rounded-full bg-slate-800" />
+                    </div>
+                  </div>
+                  <div className="p-2 space-y-1 max-h-96 overflow-y-auto no-scrollbar">
+                    {activeWorktree?.files && activeWorktree.files.length > 0 ? activeWorktree.files.map(file => (
+                      <div key={file.name} className="flex items-center justify-between p-2 hover:bg-indigo-500/10 rounded group cursor-pointer transition-all">
+                        <div className="flex items-center gap-3">
+                          <FileCode size={16} className="text-indigo-400" />
+                          <div>
+                            <div className="text-[11px] font-mono text-slate-300">{file.name}</div>
+                            <div className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">Modified by {file.author}</div>
+                          </div>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-700 pr-2">{file.size}</div>
+                      </div>
+                    )) : (
+                      <div className="text-xs text-slate-600 italic p-8 border border-dashed border-slate-800/50 rounded-lg text-center m-2">No files currently in this worktree playground.</div>
+                    )}
+                    
+                    {activeWorktree?.status === 'Processing' && (
+                      <div className="flex items-center gap-3 p-3 border-t border-slate-800 mt-2 text-indigo-400/50 animate-pulse bg-indigo-500/5 rounded-b-lg">
+                         <FileText size={16} />
+                         <div className="text-[11px] font-mono italic">Thinking: operating in {activeWorktree.branch} context...</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#07080a] text-slate-200 font-sans p-6 selection:bg-indigo-500/30">
+      <nav className="flex justify-between items-center mb-10 border-b border-slate-800/50 pb-6 max-w-7xl mx-auto">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('dashboard')}>
+            <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center">
+              <ShieldCheck size={20} className="text-white" />
+            </div>
+            <h1 className="text-xl font-black tracking-tighter text-white uppercase italic text-shadow-sm">Orbital</h1>
+          </div>
+          <div className="flex gap-10 text-[11px] font-bold uppercase tracking-widest">
+            <button 
+              onClick={() => setCurrentView('dashboard')}
+              className={`flex items-center gap-2 transition-all ${currentView === 'dashboard' ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-600 hover:text-slate-300'}`}
+            >
+              Pipeline
+            </button>
+            <button 
+              onClick={() => setCurrentView('workspaces')}
+              className={`flex items-center gap-2 transition-all ${currentView === 'workspaces' ? 'text-indigo-400 border-b-2 border-indigo-500 pb-1' : 'text-slate-600 hover:text-slate-300'}`}
+            >
+              Workspaces
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setCurrentView('intent-chat')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs transition-all ${currentView === 'intent-chat' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}`}
+          >
+            <Plus size={16} /> INITIALIZE SESSION
+          </button>
+          <div className="w-9 h-9 border border-slate-800 rounded-full flex items-center justify-center text-slate-600 font-mono text-xs">LN</div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto pb-20">
+        {currentView === 'dashboard' ? renderDashboard() : 
+         currentView === 'workspaces' ? renderWorkspaces() : 
+         /* Chat Interface */
+         <div className="max-w-4xl mx-auto flex flex-col h-[70vh] animate-in slide-in-from-bottom-8">
+            <div className="flex-1 bg-slate-950/50 border border-slate-800 rounded-3xl p-6 flex flex-col overflow-hidden shadow-inner">
+               <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center"><Bot size={24} /></div>
+                   <h2 className="text-md font-bold text-white tracking-tight">Intent Clarifier</h2>
+                 </div>
+                 <div className="flex gap-1 items-center bg-indigo-500/10 px-3 py-1 rounded-full">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Pipeline v2 Ready</span>
+                 </div>
+               </div>
+               <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-6 pr-4 mb-4 no-scrollbar">
+                 {messages.map((msg, i) => (
+                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                     <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-900 border border-slate-800 text-slate-300 rounded-tl-none shadow-sm'}`}>
+                       {msg.content}
+                     </div>
+                   </div>
+                 ))}
+                 {generatedSpec && (
+                   <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-6 space-y-4 animate-in zoom-in-95">
+                      <div className="flex justify-between items-center underline underline-offset-4 decoration-indigo-500/30">
+                        <h4 className="text-xs font-bold text-indigo-400 flex items-center gap-2"><Wand2 size={16} /> GENERATED SPECIFICATION</h4>
+                        <span className="text-[10px] text-indigo-400 font-bold tracking-tighter uppercase">Provisioning Ready</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="text-sm font-bold text-white">{generatedSpec.title}</div>
+                        <p className="text-xs text-slate-400 italic">"{generatedSpec.description}"</p>
+                        <div className="flex flex-wrap gap-2">
+                           {generatedSpec.techStack.map(tag => <span key={tag} className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">{tag}</span>)}
+                        </div>
+                      </div>
+                      <button onClick={deployTask} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2">DEPLOY PIPELINE <Rocket size={16}/></button>
+                   </div>
+                 )}
+               </div>
+               <form onSubmit={handleSendMessage} className="relative">
+                 <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Describe your coding objective..." className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-6 pr-14 py-4 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-slate-600 shadow-2xl" />
+                 <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-transform"><Send size={18} /></button>
+               </form>
+            </div>
+         </div>
+        }
+      </main>
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-md border border-slate-800 px-6 py-2.5 rounded-full flex gap-8 items-center shadow-2xl z-50">
+        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Orchestrator Online</span></div>
+        <div className="flex items-center gap-2 border-l border-slate-800 pl-8"><span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Active Contexts: {workspaces.length}</span></div>
+      </div>
+    </div>
+  );
+};
+
+export default App;

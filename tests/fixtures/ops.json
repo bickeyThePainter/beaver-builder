@@ -1,0 +1,66 @@
+{
+  "_comment": "Sample Op messages for each variant. Matches backend/src/protocol/ops.rs and frontend/src/types/index.ts",
+  "ops": [
+    {
+      "type": "UserMessage",
+      "payload": {
+        "task_id": "01JQXYZ1234567890ABCDEF",
+        "content": "Build a REST API for a todo app with CRUD endpoints"
+      }
+    },
+    {
+      "type": "StartPipeline",
+      "payload": {
+        "task_id": "01JQXYZ1234567890ABCDEF",
+        "workspace_id": "01JQWS0000000000000001"
+      }
+    },
+    {
+      "type": "AdvanceStage",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001"
+      }
+    },
+    {
+      "type": "RevertStage",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001",
+        "reason": "Missing error handling in POST /todos endpoint"
+      }
+    },
+    {
+      "type": "ApproveHumanReview",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001"
+      }
+    },
+    {
+      "type": "RejectHumanReview",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001",
+        "reason": "API design doesn't match the agreed spec. PUT endpoint should be PATCH for partial updates."
+      }
+    },
+    {
+      "type": "Deploy",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001",
+        "environment": "staging"
+      }
+    },
+    {
+      "type": "Push",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001",
+        "remote": "origin",
+        "branch": "feat/todo-api"
+      }
+    },
+    {
+      "type": "InterruptPipeline",
+      "payload": {
+        "pipeline_id": "01JQPIPE000000000000001"
+      }
+    }
+  ]
+}
