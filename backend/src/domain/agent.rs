@@ -14,11 +14,18 @@ pub struct AgentConfig {
 
 impl AgentConfig {
     /// Default agent configuration for each pipeline stage.
+    ///
+    /// Model assignments:
+    /// - IntentClarifier: gpt-5.2-codex (fast, good at dialog)
+    /// - Planner (designer): gpt-5.4 (strongest reasoning)
+    /// - Coder: gpt-5.3 (good balance of speed and capability)
+    /// - Reviewer: gpt-5.4 (strongest for arch/quality review)
+    /// - Default: gpt-5.4
     pub fn for_stage(stage: Stage) -> Self {
         match stage {
             Stage::IntentClarifier => Self {
                 role: stage,
-                model: "claude-sonnet-4-20250514".into(),
+                model: "gpt-5.2-codex".into(),
                 system_prompt: INTENT_CLARIFIER_PROMPT.into(),
                 temperature: 0.7,
                 max_tokens: 4096,
@@ -26,7 +33,7 @@ impl AgentConfig {
             },
             Stage::InitAgent => Self {
                 role: stage,
-                model: "claude-haiku-4-20250414".into(),
+                model: "gpt-5.3-codex".into(),
                 system_prompt: INIT_AGENT_PROMPT.into(),
                 temperature: 0.2,
                 max_tokens: 2048,
@@ -34,7 +41,7 @@ impl AgentConfig {
             },
             Stage::Planner => Self {
                 role: stage,
-                model: "claude-opus-4-20250514".into(),
+                model: "gpt-5.4".into(),
                 system_prompt: PLANNER_PROMPT.into(),
                 temperature: 0.4,
                 max_tokens: 8192,
@@ -42,7 +49,7 @@ impl AgentConfig {
             },
             Stage::Coder => Self {
                 role: stage,
-                model: "claude-sonnet-4-20250514".into(),
+                model: "gpt-5.3-codex".into(),
                 system_prompt: CODER_PROMPT.into(),
                 temperature: 0.3,
                 max_tokens: 8192,
@@ -53,7 +60,7 @@ impl AgentConfig {
             },
             Stage::Reviewer => Self {
                 role: stage,
-                model: "claude-opus-4-20250514".into(),
+                model: "gpt-5.4".into(),
                 system_prompt: REVIEWER_PROMPT.into(),
                 temperature: 0.2,
                 max_tokens: 4096,
@@ -62,10 +69,10 @@ impl AgentConfig {
                     "grep".into(), "git_diff".into(),
                 ],
             },
-            // Deploy, Push, and terminal stages use minimal config
+            // Deploy, Push, and terminal stages use default model
             _ => Self {
                 role: stage,
-                model: "claude-haiku-4-20250414".into(),
+                model: "gpt-5.4".into(),
                 system_prompt: String::new(),
                 temperature: 0.0,
                 max_tokens: 1024,

@@ -1,8 +1,11 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::domain::pipeline::Pipeline;
+use crate::domain::agent::AgentConfig;
+use crate::domain::pipeline::{Pipeline, Stage};
 use crate::domain::task::Task;
+use crate::infrastructure::llm_client::{LlmClient, LlmMessage, LlmRequest};
 use crate::protocol::events::Event;
 use crate::protocol::ops::Op;
 
@@ -13,8 +16,11 @@ use crate::protocol::ops::Op;
 pub struct PipelineOrchestrator {
     sq_rx: mpsc::Receiver<Op>,
     eq_tx: broadcast::Sender<Event>,
+    llm: Arc<LlmClient>,
     pipelines: HashMap<String, Pipeline>,
     tasks: HashMap<String, Task>,
+    /// Per-pipeline conversation history for the active stage agent.
+    conversations: HashMap<String, Vec<LlmMessage>>,
     next_id: u64,
 }
 
@@ -23,8 +29,10 @@ impl PipelineOrchestrator {
         Self {
             sq_rx,
             eq_tx,
+            llm: Arc::new(LlmClient::from_env()),
             pipelines: HashMap::new(),
             tasks: HashMap::new(),
+            conversations: HashMap::new(),
             next_id: 1,
         }
     }
@@ -150,19 +158,71 @@ impl PipelineOrchestrator {
             }
 
             Op::UserMessage { task_id, content } => {
-                // Forward to intent clarifier agent (placeholder)
                 let pipeline_id = self.tasks.get(&task_id)
                     .and_then(|t| t.pipeline_id.clone())
                     .unwrap_or_default();
                 if pipeline_id.is_empty() {
                     return Err(format!("Task {task_id} has no attached pipeline").into());
                 }
-                self.emit(Event::AgentOutput {
-                    pipeline_id,
-                    stage: crate::domain::pipeline::Stage::IntentClarifier,
-                    delta: format!("Received: {content}"),
-                    is_final: false,
+
+                // Determine current stage and its agent config
+                let current_stage = self.pipelines.get(&pipeline_id)
+                    .map(|p| p.current_stage())
+                    .unwrap_or(Stage::IntentClarifier);
+                let agent_cfg = AgentConfig::for_stage(current_stage);
+
+                // Build conversation history
+                let conv = self.conversations.entry(pipeline_id.clone()).or_insert_with(|| {
+                    vec![LlmMessage {
+                        role: "system".into(),
+                        content: agent_cfg.system_prompt.clone(),
+                    }]
                 });
+                conv.push(LlmMessage {
+                    role: "user".into(),
+                    content: content.clone(),
+                });
+
+                // Call OpenAI
+                let llm = self.llm.clone();
+                let messages = conv.clone();
+                let model = agent_cfg.model.clone();
+                let temperature = agent_cfg.temperature;
+                let max_tokens = agent_cfg.max_tokens;
+
+                let result = llm.chat(LlmRequest {
+                    model,
+                    messages,
+                    temperature,
+                    max_tokens,
+                    tools: None,
+                }).await;
+
+                match result {
+                    Ok(response) => {
+                        // Record assistant reply in conversation
+                        if let Some(conv) = self.conversations.get_mut(&pipeline_id) {
+                            conv.push(LlmMessage {
+                                role: "assistant".into(),
+                                content: response.content.clone(),
+                            });
+                        }
+                        self.emit(Event::AgentOutput {
+                            pipeline_id,
+                            stage: current_stage,
+                            delta: response.content,
+                            is_final: true,
+                        });
+                    }
+                    Err(e) => {
+                        tracing::error!("LLM call failed: {e}");
+                        self.emit(Event::Error {
+                            pipeline_id: Some(pipeline_id),
+                            code: "llm_error".into(),
+                            message: e.to_string(),
+                        });
+                    }
+                }
             }
 
             Op::Deploy { pipeline_id, environment } => {

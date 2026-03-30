@@ -125,18 +125,23 @@ impl LlmClient {
 
     /// Create client from environment variables.
     ///
-    /// Configuration:
-    /// - `LLM_BASE_URL`: Base URL for the OpenAI-compatible API (default: `http://localhost:11434/v1` for Ollama)
-    /// - `LLM_API_KEY`: Bearer token for authentication (default: empty, which is fine for local Ollama)
+    /// Configuration (checked in order):
+    /// - `LLM_BASE_URL` / `OPENAI_BASE_URL`: API base URL (default: `https://api.openai.com`)
+    /// - `LLM_API_KEY` / `OPENAI_API_KEY`: Bearer token for authentication
     ///
-    /// This client uses the OpenAI-compatible `/v1/chat/completions` endpoint format.
-    /// It works with Ollama, vLLM, LiteLLM, OpenAI, or any OpenAI-compatible proxy.
+    /// Uses the OpenAI `/v1/chat/completions` endpoint format.
     pub fn from_env() -> Self {
-        let base_url =
-            std::env::var("LLM_BASE_URL").unwrap_or_else(|_| "http://localhost:11434/v1".into());
-        let api_key = std::env::var("LLM_API_KEY").unwrap_or_default();
+        let base_url = std::env::var("LLM_BASE_URL")
+            .or_else(|_| std::env::var("OPENAI_BASE_URL"))
+            .unwrap_or_else(|_| "https://api.openai.com".into());
+        let api_key = std::env::var("LLM_API_KEY")
+            .or_else(|_| std::env::var("OPENAI_API_KEY"))
+            .unwrap_or_default();
         Self::new(base_url, api_key)
     }
+
+    /// Default model for stages without a specific assignment.
+    pub const DEFAULT_MODEL: &'static str = "gpt-5.4";
 
     /// Non-streaming chat completion with retry logic.
     pub async fn chat(&self, request: LlmRequest) -> Result<LlmResponse, LlmError> {
@@ -194,7 +199,8 @@ impl LlmClient {
             );
         }
 
-        let url = format!("{}/v1/chat/completions", self.base_url);
+        let base = self.base_url.trim_end_matches('/');
+        let url = format!("{base}/v1/chat/completions");
         let response = self
             .http
             .post(&url)
@@ -284,7 +290,8 @@ impl LlmClient {
             );
         }
 
-        let url = format!("{}/v1/chat/completions", self.base_url);
+        let base = self.base_url.trim_end_matches('/');
+        let url = format!("{base}/v1/chat/completions");
         let response = self
             .http
             .post(&url)

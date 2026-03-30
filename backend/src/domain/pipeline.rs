@@ -163,6 +163,11 @@ impl Pipeline {
         }
     }
 
+    /// Current stage of the pipeline.
+    pub fn current_stage(&self) -> Stage {
+        self.current_stage
+    }
+
     /// Check if the pipeline is in a terminal state.
     pub fn is_terminal(&self) -> bool {
         matches!(self.current_stage, Stage::Completed | Stage::Failed)
