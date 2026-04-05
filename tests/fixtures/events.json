@@ -1,0 +1,85 @@
+[
+  {
+    "type": "PipelineCreated",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "task_id": "task-001",
+      "stage": "planner"
+    }
+  },
+  {
+    "type": "StageTransition",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "from": "created",
+      "to": "planner",
+      "timestamp": "2026-04-05T10:00:00Z"
+    }
+  },
+  {
+    "type": "AgentOutput",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "stage": "planner",
+      "delta": "I suggest we structure the blog API with the following endpoints:\n- GET /posts\n- POST /posts\n- GET /posts/:id\n- PUT /posts/:id\n- DELETE /posts/:id",
+      "is_final": true
+    }
+  },
+  {
+    "type": "ToolExecution",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "tool": "create_file",
+      "params": "{\"path\": \"src/routes/posts.rs\", \"content\": \"...\"}",
+      "result": "File created: src/routes/posts.rs (42 lines)",
+      "duration_ms": 150
+    }
+  },
+  {
+    "type": "ApprovalRequired",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "task_id": "task-001",
+      "summary": "Implementation complete. 5 files changed, 320 lines added. All tests passing. Ready for human review."
+    }
+  },
+  {
+    "type": "ReviewSubmitted",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "verdict": "rejected",
+      "iteration": 2
+    }
+  },
+  {
+    "type": "DeployStatus",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "status": "success",
+      "url": "https://staging.example.com/api/v1"
+    }
+  },
+  {
+    "type": "PushComplete",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "remote": "origin",
+      "sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    }
+  },
+  {
+    "type": "Error",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "code": "invalid_transition",
+      "message": "Cannot advance from completed stage"
+    }
+  },
+  {
+    "type": "Warning",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "message": "Review loop exhausted after 3 iterations — auto-escalating to human review"
+    }
+  }
+]

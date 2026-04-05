@@ -1,0 +1,46 @@
+[
+  {
+    "id": "ws-001",
+    "name": "blog-api",
+    "repo_path": "/home/user/projects/blog-api",
+    "default_branch": "main",
+    "worktrees": [
+      {
+        "id": "wt-001",
+        "branch": "feature/crud-endpoints",
+        "path": "/home/user/projects/blog-api-feature-crud-endpoints",
+        "created_at": "2026-04-05T09:00:00Z"
+      },
+      {
+        "id": "wt-002",
+        "branch": "feature/auth-middleware",
+        "path": "/home/user/projects/blog-api-feature-auth-middleware",
+        "created_at": "2026-04-05T09:30:00Z"
+      }
+    ],
+    "created_at": "2026-04-01T08:00:00Z"
+  },
+  {
+    "id": "ws-002",
+    "name": "dashboard-ui",
+    "repo_path": "/home/user/projects/dashboard-ui",
+    "default_branch": "main",
+    "worktrees": [
+      {
+        "id": "wt-003",
+        "branch": "feature/charts-component",
+        "path": "/home/user/projects/dashboard-ui-feature-charts-component",
+        "created_at": "2026-04-03T14:00:00Z"
+      }
+    ],
+    "created_at": "2026-04-02T10:00:00Z"
+  },
+  {
+    "id": "ws-003",
+    "name": "shared-utils",
+    "repo_path": "/home/user/projects/shared-utils",
+    "default_branch": "develop",
+    "worktrees": [],
+    "created_at": "2026-04-04T16:00:00Z"
+  }
+]

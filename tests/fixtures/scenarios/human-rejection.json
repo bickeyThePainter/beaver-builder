@@ -1,0 +1,332 @@
+{
+  "name": "Human Rejection — Reject, Fix, and Complete",
+  "description": "Pipeline reaches HumanReview. Human rejects, which resets review_iterations to 0 and reverts to Coder. Coder fixes, Reviewer approves, Human approves, then Deploy and Push complete the pipeline.",
+  "steps": [
+    {
+      "step": 1,
+      "description": "Start a new pipeline",
+      "op": {
+        "type": "StartPipeline",
+        "payload": {
+          "task_id": "task-hr-001",
+          "workspace_id": "ws-002"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "PipelineCreated",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "task_id": "task-hr-001",
+            "stage": "planner"
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "created",
+            "to": "planner",
+            "timestamp": "2026-04-05T12:00:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "planner",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 2,
+      "description": "Advance: Planner → InitAgent",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "planner",
+            "to": "init_agent",
+            "timestamp": "2026-04-05T12:01:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "init_agent",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 3,
+      "description": "Advance: InitAgent → Coder",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "init_agent",
+            "to": "coder",
+            "timestamp": "2026-04-05T12:02:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 4,
+      "description": "Advance: Coder → Reviewer",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T12:03:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 5,
+      "description": "Advance: Reviewer → HumanReview (reviewer approves)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "reviewer",
+            "to": "human_review",
+            "timestamp": "2026-04-05T12:04:00Z"
+          }
+        },
+        {
+          "type": "ApprovalRequired",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "task_id": "task-hr-001",
+            "summary": "Reviewer approved. 8 files changed, 450 lines added, 12 lines removed. Awaiting human review."
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "human_review",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 6,
+      "description": "Human rejects — reverts to Coder, resets review counter",
+      "op": {
+        "type": "RejectHumanReview",
+        "payload": {
+          "pipeline_id": "pipe-hr-001",
+          "reason": "The authentication middleware is missing rate limiting. Also need to add request logging."
+        }
+      },
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "verdict": "rejected",
+            "iteration": 0
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "human_review",
+            "to": "coder",
+            "timestamp": "2026-04-05T12:05:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 0,
+        "notes": "review_iterations reset to 0 on human rejection"
+      }
+    },
+    {
+      "step": 7,
+      "description": "Advance: Coder → Reviewer (after human-requested fixes)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T12:06:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 8,
+      "description": "Advance: Reviewer → HumanReview (reviewer approves again)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "reviewer",
+            "to": "human_review",
+            "timestamp": "2026-04-05T12:07:00Z"
+          }
+        },
+        {
+          "type": "ApprovalRequired",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "task_id": "task-hr-001",
+            "summary": "Fixes applied: rate limiting added, request logging implemented. 10 files changed, 520 lines added, 18 lines removed."
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "human_review",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 9,
+      "description": "Human approves this time",
+      "op": {
+        "type": "ApproveHumanReview",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "human_review",
+            "to": "deploy",
+            "timestamp": "2026-04-05T12:08:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "deploy",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 10,
+      "description": "Deploy stage completes, advance to Push",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "DeployStatus",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "status": "success",
+            "url": "https://staging.example.com/api/v1"
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "deploy",
+            "to": "push",
+            "timestamp": "2026-04-05T12:09:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "push",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 11,
+      "description": "Push stage completes — pipeline is done",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-hr-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "PushComplete",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "remote": "origin",
+            "sha": "b2c3d4e5f6a7b2c3d4e5f6a7b2c3d4e5f6a7b2c3"
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-hr-001",
+            "from": "push",
+            "to": "completed",
+            "timestamp": "2026-04-05T12:10:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "completed",
+        "review_iterations": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "name": "Review Loop — 3 Reverts + Auto-Escalation",
+  "description": "Reviewer rejects 3 times (each time reverting to Coder). On the 4th attempt the review loop is exhausted and the pipeline auto-escalates to HumanReview with a Warning.",
+  "steps": [
+    {
+      "step": 1,
+      "description": "Start a new pipeline",
+      "op": {
+        "type": "StartPipeline",
+        "payload": {
+          "task_id": "task-rl-001",
+          "workspace_id": "ws-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "PipelineCreated",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "task_id": "task-rl-001",
+            "stage": "planner"
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "created",
+            "to": "planner",
+            "timestamp": "2026-04-05T11:00:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "planner",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 2,
+      "description": "Advance: Planner → InitAgent",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "planner",
+            "to": "init_agent",
+            "timestamp": "2026-04-05T11:01:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "init_agent",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 3,
+      "description": "Advance: InitAgent → Coder",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "init_agent",
+            "to": "coder",
+            "timestamp": "2026-04-05T11:02:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 4,
+      "description": "Advance: Coder → Reviewer",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T11:03:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 0
+      }
+    },
+    {
+      "step": 5,
+      "description": "Revert #1: Reviewer rejects — back to Coder",
+      "op": {
+        "type": "RevertStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001",
+          "reason": "Missing input validation on POST /posts endpoint"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "verdict": "rejected",
+            "iteration": 1
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "reviewer",
+            "to": "coder",
+            "timestamp": "2026-04-05T11:04:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 1
+      }
+    },
+    {
+      "step": 6,
+      "description": "Advance: Coder → Reviewer (after fix #1)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T11:05:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 1
+      }
+    },
+    {
+      "step": 7,
+      "description": "Revert #2: Reviewer rejects again — back to Coder",
+      "op": {
+        "type": "RevertStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001",
+          "reason": "Error responses not following RFC 7807 problem detail format"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "verdict": "rejected",
+            "iteration": 2
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "reviewer",
+            "to": "coder",
+            "timestamp": "2026-04-05T11:06:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 2
+      }
+    },
+    {
+      "step": 8,
+      "description": "Advance: Coder → Reviewer (after fix #2)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T11:07:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 2
+      }
+    },
+    {
+      "step": 9,
+      "description": "Revert #3: Reviewer rejects a third time — back to Coder",
+      "op": {
+        "type": "RevertStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001",
+          "reason": "Pagination still returns wrong total count"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "ReviewSubmitted",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "verdict": "rejected",
+            "iteration": 3
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "reviewer",
+            "to": "coder",
+            "timestamp": "2026-04-05T11:08:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "coder",
+        "review_iterations": 3
+      }
+    },
+    {
+      "step": 10,
+      "description": "Advance: Coder → Reviewer (after fix #3)",
+      "op": {
+        "type": "AdvanceStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "coder",
+            "to": "reviewer",
+            "timestamp": "2026-04-05T11:09:00Z"
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "reviewer",
+        "review_iterations": 3
+      }
+    },
+    {
+      "step": 11,
+      "description": "Revert #4: Review loop exhausted — auto-escalate to HumanReview",
+      "op": {
+        "type": "RevertStage",
+        "payload": {
+          "pipeline_id": "pipe-rl-001",
+          "reason": "Still not passing integration tests"
+        }
+      },
+      "expected_events": [
+        {
+          "type": "Warning",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "message": "Review loop exhausted after 3 iterations — auto-escalating to human review"
+          }
+        },
+        {
+          "type": "StageTransition",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "from": "reviewer",
+            "to": "human_review",
+            "timestamp": "2026-04-05T11:10:00Z"
+          }
+        },
+        {
+          "type": "ApprovalRequired",
+          "payload": {
+            "pipeline_id": "pipe-rl-001",
+            "task_id": "task-rl-001",
+            "summary": "Auto-escalated: review loop exhausted after 3 iterations. Human intervention required."
+          }
+        }
+      ],
+      "state_after": {
+        "pipeline_stage": "human_review",
+        "review_iterations": 3
+      }
+    }
+  ]
+}

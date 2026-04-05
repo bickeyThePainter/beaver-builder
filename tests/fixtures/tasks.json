@@ -1,0 +1,52 @@
+[
+  {
+    "id": "task-001",
+    "title": "Blog API with CRUD, Auth, and Pagination",
+    "spec": "Build a REST API for managing blog posts. Endpoints: GET /posts (with pagination), POST /posts, GET /posts/:id, PUT /posts/:id, DELETE /posts/:id. Include JWT authentication middleware and rate limiting.",
+    "workspace_id": "ws-001",
+    "pipeline_id": "pipe-001",
+    "pipeline_stage": "completed",
+    "review_iterations": 0,
+    "created_at": "2026-04-05T09:00:00Z"
+  },
+  {
+    "id": "task-002",
+    "title": "Dashboard Charts Component",
+    "spec": "Create a reusable charts component for the dashboard using D3.js. Support bar charts, line charts, and pie charts. Data should be fetched from the /api/metrics endpoint.",
+    "workspace_id": "ws-002",
+    "pipeline_id": "pipe-002",
+    "pipeline_stage": "reviewer",
+    "review_iterations": 1,
+    "created_at": "2026-04-05T10:00:00Z"
+  },
+  {
+    "id": "task-003",
+    "title": "Rate Limiting Middleware",
+    "spec": "Add rate limiting middleware to the blog API. Use a sliding window algorithm with configurable limits per endpoint. Store counters in Redis.",
+    "workspace_id": "ws-001",
+    "pipeline_id": "pipe-003",
+    "pipeline_stage": "human_review",
+    "review_iterations": 3,
+    "created_at": "2026-04-05T11:00:00Z"
+  },
+  {
+    "id": "task-004",
+    "title": "Shared Utility Library Setup",
+    "spec": "Initialize a shared TypeScript utility library with date formatting, string helpers, and validation functions. Set up vitest, publish config, and documentation.",
+    "workspace_id": "ws-003",
+    "pipeline_id": null,
+    "pipeline_stage": null,
+    "review_iterations": 0,
+    "created_at": "2026-04-05T12:00:00Z"
+  },
+  {
+    "id": "task-005",
+    "title": "WebSocket Event Logging",
+    "spec": "Add structured logging for all WebSocket events. Log op receipts, event emissions, connection lifecycle, and errors. Use tracing crate with JSON output format.",
+    "workspace_id": "ws-001",
+    "pipeline_id": "pipe-005",
+    "pipeline_stage": "coder",
+    "review_iterations": 0,
+    "created_at": "2026-04-05T13:00:00Z"
+  }
+]

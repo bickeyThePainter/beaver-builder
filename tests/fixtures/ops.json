@@ -1,0 +1,55 @@
+[
+  {
+    "type": "UserMessage",
+    "payload": {
+      "task_id": "task-001",
+      "content": "Build a REST API for managing blog posts with CRUD endpoints"
+    }
+  },
+  {
+    "type": "StartPipeline",
+    "payload": {
+      "task_id": "task-001",
+      "workspace_id": "ws-001"
+    }
+  },
+  {
+    "type": "AdvanceStage",
+    "payload": {
+      "pipeline_id": "pipe-001"
+    }
+  },
+  {
+    "type": "RevertStage",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "reason": "Missing error handling in POST endpoint"
+    }
+  },
+  {
+    "type": "ApproveHumanReview",
+    "payload": {
+      "pipeline_id": "pipe-001"
+    }
+  },
+  {
+    "type": "RejectHumanReview",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "reason": "Tests are insufficient — need integration tests for auth middleware"
+    }
+  },
+  {
+    "type": "Deploy",
+    "payload": {
+      "pipeline_id": "pipe-001",
+      "environment": "staging"
+    }
+  },
+  {
+    "type": "InterruptPipeline",
+    "payload": {
+      "pipeline_id": "pipe-001"
+    }
+  }
+]
